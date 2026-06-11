@@ -1,0 +1,53 @@
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "/api",
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Auth
+export const authAPI = {
+  login: (data) => api.post("/auth/login", data),
+  register: (data) => api.post("/auth/register", data),
+  logout: () => api.post("/auth/logout"),
+  me: () => api.get("/auth/me"),
+};
+
+// Profile
+export const profileAPI = {
+  get: () => api.get("/profile"),
+  update: (data) => api.put("/profile", data),
+};
+
+// Weight
+export const weightAPI = {
+  record: (data) => api.post("/weight", data),
+  get: (params) => api.get("/weight", { params }),
+  delete: (id) => api.delete(`/weight/${id}`),
+};
+
+// Activity
+export const activityAPI = {
+  create: (data) => api.post("/activity", data),
+  get: (params) => api.get("/activity", { params }),
+  getTypes: () => api.get("/activity/types"),
+  delete: (id) => api.delete(`/activity/${id}`),
+};
+
+// Plan
+export const planAPI = {
+  generateMonthly: () => api.post("/plan/generate-monthly"),
+  getActive: () => api.get("/plan/active"),
+  getHistory: () => api.get("/plan/history"),
+};
+
+// Report
+export const reportAPI = {
+  getMonthly: (month) => api.get(`/report/monthly/${month}`),
+  getCurrentSummary: () => api.get("/report/current-summary"),
+};
+
+export default api;
