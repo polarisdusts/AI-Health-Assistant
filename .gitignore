@@ -26,3 +26,12 @@ npm-debug.log*
 # Runtime / temp
 tmp/
 temp/
+
+# Runtime output files
+stderr.txt
+stdout.txt
+
+# Utility scripts
+check_enc.py
+check_encoding.py
+fix_encoding.py
