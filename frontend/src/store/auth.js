@@ -1,4 +1,4 @@
-﻿import { defineStore } from "pinia";
+import { defineStore } from "pinia";
 import { authAPI, profileAPI } from "../api/index.js";
 
 export const useAuthStore = defineStore("auth", {

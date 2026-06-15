@@ -23,8 +23,7 @@ function buildWeightTrendContext(weightRecords) {
   const monthlyAvgs = Object.entries(monthlyGroups)
     .map(([month, weights]) => ({
       month,
-      avgWeight:
-        weights.reduce((s, w) => s + w, 0) / weights.length,
+      avgWeight: weights.reduce((s, w) => s + w, 0) / weights.length,
     }))
     .sort((a, b) => a.month.localeCompare(b.month));
 
@@ -51,15 +50,12 @@ function buildWeightTrendContext(weightRecords) {
   }
 
   const records = monthlyAvgs
-    .map(
-      (m) =>
-        `${m.month}：平均体重 ${m.avgWeight.toFixed(1)}kg`
-    )
+    .map((m) => `${m.month}：平均体重${m.avgWeight.toFixed(1)}kg`)
     .join(" → ");
 
   return (
     `用户过去 ${monthlyAvgs.length} 个月的体重变化：${records}\n` +
-    `变化幅度：${diffPercent >= 0 ? "下降" : "上升"}${Math.abs(diffPercent).toFixed(1)}%（${Math.abs(diff).toFixed(1)}kg）\n` +
+    `变化幅度：${diffPercent >= 0 ? "下降" : "上升"}${Math.abs(diffPercent).toFixed(1)}%，${Math.abs(diff).toFixed(1)}kg\n` +
     `趋势判定：${trendDesc}`
   );
 }
@@ -74,11 +70,8 @@ function buildMonthlySummary(activities, month) {
   const sessionDays = new Set(activities.map((a) => a.record_date)).size;
 
   // 计算日均值
-  const daysInMonth = new Date(
-    parseInt(month.split("-")[0]),
-    parseInt(month.split("-")[1]),
-    0
-  ).getDate();
+  const [year, mon] = month.split("-").map(Number);
+  const daysInMonth = new Date(year, mon, 0).getDate();
   const dailyAvgCalories = daysInMonth > 0 ? (totalCalories / daysInMonth).toFixed(0) : 0;
   const dailyAvgSteps = daysInMonth > 0 ? (totalSteps / daysInMonth).toFixed(0) : 0;
 
@@ -98,74 +91,51 @@ function buildMonthlySummary(activities, month) {
  */
 function buildAIPrompt(user, weightContext, monthlySummary) {
   const ageGroup =
-    user.age < 18
-      ? "青少年"
-      : user.age < 40
-      ? "青壮年"
-      : user.age < 60
-      ? "中年"
-      : "老年";
+    user.age < 18 ? "青少年" :
+    user.age < 40 ? "青壮年" :
+    user.age < 60 ? "中年" : "老年";
 
-  const genderLabel =
-    user.gender === "male" ? "男性" : user.gender === "female" ? "女性" : "其他";
+  const genderLabel = user.gender === "male" ? "男性" : user.gender === "female" ? "女性" : "其他";
+  const activityLabel = user.activity_level === "low" ? "低活动量" : user.activity_level === "medium" ? "中等活动量" : "高活动量";
+  const dietLabel = user.diet_preference === "vegetarian" ? "素食" : user.diet_preference === "high_protein" ? "高蛋白" : "均衡饮食";
+  const bmi = (user.weight / ((user.height / 100) * (user.height / 100))).toFixed(1);
 
-  const activityLabel =
-    user.activity_level === "low"
-      ? "低活动量"
-      : user.activity_level === "medium"
-      ? "中等活动量"
-      : "高活动量";
-
-  const dietLabel =
-    user.diet_preference === "vegetarian"
-      ? "素食"
-      : user.diet_preference === "high_protein"
-      ? "高蛋白"
-      : "均衡饮食";
-
-  return `
-【健康计划生成任务】
-
-## 用户基本信息
-- 年龄：${user.age}岁（${ageGroup}）
-- 性别：${genderLabel}
-- 身高：${user.height}cm
-- 体重：${user.weight}kg
-- BMI：${(user.weight / ((user.height / 100) * (user.height / 100))).toFixed(1)}
-- 活动水平：${activityLabel}
-- 饮食偏好：${dietLabel}
-- 健康目标：${user.health_goal || "未设定"}
-
-## 体重历史趋势
-${weightContext}
-
-## 本月运动概况
-${monthlySummary?.summary || "暂无本月运动数据"}
-
-## 任务要求
-请根据以上用户信息，生成一份为期一个月的个性化饮食与运动计划，要求：
-
-### 饮食计划
-1. 每日热量摄入建议
-2. 三餐分配比例
-3. 推荐食物清单
-4. 需要避免的食物
-5. 营养补充建议
-
-### 运动计划
-1. 每周运动频率建议
-2. 运动类型推荐（结合用户偏好和活动水平）
-3. 每次运动时长建议
-4. 运动强度指导
-5. 渐进式提升方案
-
-请以JSON格式输出，包含以下结构：
-{
-  "diet_plan": { "daily_calories": ..., "meals": {...}, "recommended_foods": [...], "avoid_foods": [...], "supplements": [...] },
-  "exercise_plan": { "weekly_frequency": ..., "recommended_types": [...], "duration_per_session": ..., "intensity": "...", "progression": "..." },
-  "summary": "一段总结性建议"
-}
-`;
+  var result = "";
+  result += "【健康计划生成任务】\n";
+  result += "## 用户基本信息\n";
+  result += "- 年龄：" + user.age + "岁（" + ageGroup + "）\n";
+  result += "- 性别：" + genderLabel + "\n";
+  result += "- 身高：" + user.height + "cm\n";
+  result += "- 体重：" + user.weight + "kg\n";
+  result += "- BMI：" + bmi + "\n";
+  result += "- 活动水平：" + activityLabel + "\n";
+  result += "- 饮食偏好：" + dietLabel + "\n";
+  result += "- 健康目标：" + (user.health_goal || "未设定") + "\n\n";
+  result += "## 体重历史趋势\n";
+  result += weightContext + "\n\n";
+  result += "## 本月运动概况\n";
+  result += (monthlySummary?.summary || "暂无本月运动数据") + "\n\n";
+  result += "## 任务要求\n";
+  result += "请根据以上用户信息，生成一份为期一个月的个性化饮食与运动计划，要求：\n";
+  result += "### 饮食计划\n";
+  result += "1. 每日热量摄入建议\n";
+  result += "2. 三餐分配比例\n";
+  result += "3. 推荐食物清单\n";
+  result += "4. 需要避免的食物\n";
+  result += "5. 营养补充建议\n\n";
+  result += "### 运动计划\n";
+  result += "1. 每周运动频率建议\n";
+  result += "2. 运动类型推荐（结合用户偏好和活动水平）\n";
+  result += "3. 每次运动时长建议\n";
+  result += "4. 运动强度指导\n";
+  result += "5. 渐进式提升方案\n";
+  result += "请以JSON格式输出，包含以下结构：\n";
+  result += '{\n';
+  result += '  "diet_plan": { "daily_calories": ..., "meals": {...}, "recommended_foods": [...], "avoid_foods": [...], "supplements": [...] },\n';
+  result += '  "exercise_plan": { "weekly_frequency": ..., "recommended_types": [...], "duration_per_session": ..., "intensity": "...", "progression": "..." },\n';
+  result += '  "summary": "一段总结性建议"\n';
+  result += "}";
+  return result;
 }
 
 module.exports = {
@@ -173,3 +143,4 @@ module.exports = {
   buildMonthlySummary,
   buildAIPrompt,
 };
+

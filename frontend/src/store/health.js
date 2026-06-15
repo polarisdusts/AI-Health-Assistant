@@ -1,4 +1,4 @@
-﻿import { defineStore } from "pinia";
+import { defineStore } from "pinia";
 import { activityAPI, weightAPI, planAPI, reportAPI } from "../api/index.js";
 
 export const useHealthStore = defineStore("health", {

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <AppLayout>
     <div class="page-header">
       <div>
@@ -196,6 +196,7 @@ import AppLayout from "../components/AppLayout.vue";
 import { foodDatabase, getAllFoods, searchFoods } from "../data/foods.js";
 import { recipes, searchRecipes } from "../data/recipes.js";
 import { useDietStore } from "../store/diet.js";
+import { planAPI } from "../api/index.js";
 
 const showToast = inject("showToast");
 const showPlan = ref(true);
@@ -229,21 +230,57 @@ const nutritionTargets = computed(() => [
 ]);
 
 // 饮食计划模拟数据
+// 饮食计划 - 优先从后端加载已保存的计划
 const dietPlanData = ref(null);
-for (let d = 1; d <= 30; d++) {
-  if (!dietPlanData.value) dietPlanData.value = {};
-  const week = Math.ceil(d / 7);
-  const plans = ["高蛋白低碳日", "均衡营养日", "低脂高纤日", "碳水补充日"];
-  const plan = plans[week % 4];
-  dietPlanData.value[d] = {
-    plan: plan + "\n早餐: " + ["全麦面包2片+鸡蛋+牛奶", "燕麦粥+蓝莓+杏仁", "蔬菜蛋饼+豆浆", "全麦馒头+豆浆+鸡蛋"][d % 4] + "\n午餐: " + ["杂粮饭+鸡胸肉+西兰花", "糙米饭+三文鱼+菠菜", "藜麦+牛肉+芦笋", "红薯+豆腐+时蔬"][d % 4] + "\n晚餐: " + ["蔬菜沙拉+烤鸡腿", "番茄汤+鱼肉+青菜", "菌菇汤+虾仁+西兰花", "豆腐蔬菜锅"][d % 4],
-    cal: [1800, 2000, 1600, 2200][week % 4],
-    protein: [80, 65, 70, 90][week % 4],
-    carbs: [180, 250, 150, 280][week % 4],
-    fat: [45, 50, 35, 55][week % 4],
-  };
+
+async function loadDietPlan() {
+  try {
+    const { data } = await planAPI.getDetailedPlans();
+    if (data && data.dietDays && data.dietDays.length >= 28) {
+      dietPlanData.value = {};
+      for (const day of data.dietDays) {
+        if (day.day >= 1 && day.day <= 30) {
+          const bf = day.breakfast || {};
+          const lu = day.lunch || {};
+          const di = day.dinner || {};
+          const sn = day.snack || {};
+          const totalCal = (bf.cal || 0) + (lu.cal || 0) + (di.cal || 0) + (sn.cal || 0);
+          const totalPro = (bf.protein || 0) + (lu.protein || 0) + (di.protein || 0) + (sn.protein || 0);
+          const totalCarbs = (bf.carbs || 0) + (lu.carbs || 0) + (di.carbs || 0) + (sn.carbs || 0);
+          const totalFat = (bf.fat || 0) + (lu.fat || 0) + (di.fat || 0) + (sn.fat || 0);
+          const planText = '早餐: ' + (bf.food || '按计划') + '\n午餐: ' + (lu.food || '按计划') + '\n晚餐: ' + (di.food || '按计划') + '\n加餐: ' + (sn.food || '按需');
+          dietPlanData.value[day.day] = {
+            plan: planText,
+            cal: totalCal,
+            protein: totalPro,
+            carbs: totalCarbs,
+            fat: totalFat,
+          };
+        }
+      }
+      return;
+    }
+  } catch (err) {
+    console.warn("加载饮食计划失败，使用默认计划:", err.message);
+  }
+  initDefaultDietPlan();
 }
 
+function initDefaultDietPlan() {
+  dietPlanData.value = {};
+  for (let d = 1; d <= 30; d++) {
+    const week = Math.ceil(d / 7);
+    const plans = ["高蛋白低碳日", "均衡营养日", "低脂高纤日", "碳水补充日"];
+    const plan = plans[week % 4];
+    dietPlanData.value[d] = {
+      plan: plan + '\n早餐: ' + ['全麦面包2片+鸡蛋+牛奶', '燕麦粥+蓝莓+杏仁', '蔬菜蛋饼+豆浆', '全麦馒头+豆浆+鸡蛋'][d % 4] + '\n午餐: ' + ['杂粮饭+鸡胸肉+西兰花', '糙米饭+三文鱼+菠菜', '藜麦+牛肉+芦笋', '红薯+豆腐+时蔬'][d % 4] + '\n晚餐: ' + ['蔬菜沙拉+烤鸡腿', '番茄汤+鱼肉+青菜', '菌菇汤+虾仁+西兰花', '豆腐蔬菜锅'][d % 4],
+      cal: [1800, 2000, 1600, 2200][week % 4],
+      protein: [80, 65, 70, 90][week % 4],
+      carbs: [180, 250, 150, 280][week % 4],
+      fat: [45, 50, 35, 55][week % 4],
+    };
+  }
+}
 const currentDayPlan = computed(() => dietPlanData.value?.[currentPlanDay.value]?.plan || "");
 const currentDayCal = computed(() => dietPlanData.value?.[currentPlanDay.value]?.cal || 0);
 const currentDayProtein = computed(() => dietPlanData.value?.[currentPlanDay.value]?.protein || 0);
@@ -325,7 +362,7 @@ function confirmAdd() {
   showToast("已添加到" + mealLabels[editingMeal.value], "success");
 }
 
-onMounted(() => { dietStore.checkDate(); });
+onMounted(() => { dietStore.checkDate(); loadDietPlan(); });
 
 function addCustomFood() {
   if (!customFood.value.name) { showToast("请输入食物名称", "error"); return; }
@@ -385,3 +422,4 @@ function addCustomFood() {
   border-radius: 8px;
 }
 </style>
+

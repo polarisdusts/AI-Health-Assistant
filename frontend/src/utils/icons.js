@@ -1,4 +1,4 @@
-﻿// SVG sport icons - inline SVGs for each activity type
+// SVG sport icons - inline SVGs for each activity type
 export const sportIcons = {
   outdoor_run: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="24" cy="10" r="5" fill="currentColor"/>

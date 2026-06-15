@@ -36,12 +36,10 @@ const User = sequelize.define("User", {
   height: {
     type: DataTypes.FLOAT,
     allowNull: true,
-    comment: "身高(cm)",
   },
   weight: {
     type: DataTypes.FLOAT,
     allowNull: true,
-    comment: "体重(kg)",
   },
   activity_level: {
     type: DataTypes.ENUM("low", "medium", "high"),
@@ -56,7 +54,6 @@ const User = sequelize.define("User", {
   health_goal: {
     type: DataTypes.TEXT,
     allowNull: true,
-    comment: "健康目标描述",
   },
   daily_calorie_goal: {
     type: DataTypes.INTEGER,

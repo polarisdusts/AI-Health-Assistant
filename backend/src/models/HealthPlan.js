@@ -14,17 +14,14 @@ const HealthPlan = sequelize.define("HealthPlan", {
   plan_type: {
     type: DataTypes.ENUM("monthly", "daily"),
     allowNull: false,
-    comment: "计划类型：月度/单次",
   },
   plan_month: {
     type: DataTypes.STRING(7),
     allowNull: true,
-    comment: "计划所属月份，格式YYYY-MM",
   },
   plan_data: {
     type: DataTypes.TEXT("long"),
     allowNull: true,
-    comment: "AI生成的计划内容(JSON)",
   },
   diet_plan: {
     type: DataTypes.TEXT("long"),

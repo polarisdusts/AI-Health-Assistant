@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <AppLayout>
     <div class="page-header">
       <div>

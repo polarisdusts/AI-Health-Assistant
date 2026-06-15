@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="card">
     <div class="card-header">
       <span class="card-title">指标达成率</span>

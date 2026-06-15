@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const { HealthPlan, User, WeightRecord, ActivityRecord } = require("../models");
 const { requireAuth } = require("../middleware/auth");
 const {
@@ -103,54 +103,7 @@ router.post("/generate-detailed-exercise", requireAuth, async (req, res) => {
     });
     const monthlySummary = buildMonthlySummary(activities, month);
 
-    // 先尝试 AI 生成详细计划
-    let detailedDays = await generateDetailedExercisePlan(user, weightContext, monthlySummary, selectedTypes);
-
-    // 如果 AI 失败，生成本地详细计划
-    if (!detailedDays) {
-      const typeNames = {
-        outdoor_run: "户外跑步", walking: "健走", outdoor_cycle: "户外骑行",
-        indoor_run: "室内跑步", jump_rope: "跳绳", swimming: "游泳",
-        yoga: "瑜伽", strength: "力量训练", hiit: "HIIT间歇训练", badminton: "羽毛球"
-      };
-      const types = (selectedTypes && selectedTypes.length > 0) ? selectedTypes : ["outdoor_run", "walking"];
-      const intensityLevel = user.activity_level === "high" ? 1.2 : user.activity_level === "low" ? 0.8 : 1.0;
-      const bmi = user.weight / ((user.height / 100) * (user.height / 100));
-      const isOverweight = bmi >= 24;
-
-      detailedDays = [];
-      for (let d = 1; d <= 30; d++) {
-        const weekDay = d % 7;
-        const type = types[(d - 1) % types.length];
-        const typeName = typeNames[type] || "有氧运动";
-        const isRecovery = weekDay === 0 || weekDay === 6;
-        const isHigh = !isRecovery && (d % 3 === 0);
-        let duration, calories;
-        if (isRecovery) {
-          duration = Math.round(15 + Math.random() * 10);
-          calories = Math.round(duration * 5 * intensityLevel);
-        } else if (isHigh) {
-          duration = Math.round(30 + Math.random() * 15);
-          calories = Math.round(duration * 8 * intensityLevel);
-        } else {
-          duration = Math.round(20 + Math.random() * 15);
-          calories = Math.round(duration * 6.5 * intensityLevel);
-        }
-        if (isOverweight) calories = Math.round(calories * 1.1);
-        const adviceList = [
-          "保持均匀呼吸，注意节奏", "量力而行，循序渐进",
-          "运动前后充分拉伸", "注意补充水分",
-          "保持心率在燃脂区间", "关注身体反馈，避免过度训练"
-        ];
-        const advice = adviceList[Math.floor(Math.random() * adviceList.length)];
-        detailedDays.push({
-          day: d, type: typeName, duration, calories,
-          isHighIntensity: isHigh,
-          advice: isRecovery ? "恢复日：低强度活动，重点拉伸放松" : advice
-        });
-      }
-    }
-
+    const detailedDays = await generateDetailedExercisePlan(user, weightContext, monthlySummary, selectedTypes);
     res.json({ days: detailedDays });
   } catch (err) {
     console.error("生成详细运动计划失败:", err);
@@ -158,6 +111,31 @@ router.post("/generate-detailed-exercise", requireAuth, async (req, res) => {
   }
 });
 
+
+// 生成 30 天详细每日饮食计划（PlanGenerator 专用）
+router.post("/generate-detailed-diet", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.session.userId);
+    if (!user) {
+      return res.status(404).json({ error: "用户不存在" });
+    }
+
+    const { dietGoal } = req.body || {};
+
+    const weightRecords = await WeightRecord.findAll({
+      where: { user_id: user.id },
+      order: [["record_date", "ASC"]],
+    });
+    const weightContext = buildWeightTrendContext(weightRecords);
+
+    const { generateDetailedDietPlan } = require("../utils/deepseekClient");
+    const days = await generateDetailedDietPlan(user, dietGoal, weightContext);
+    res.json({ days });
+  } catch (err) {
+    console.error("生成详细饮食计划失败:", err);
+    res.status(500).json({ error: "生成详细饮食计划失败" });
+  }
+});
 // 获取当前计划
 router.get("/active", requireAuth, async (req, res) => {
   try {
@@ -210,4 +188,70 @@ router.get("/history", requireAuth, async (req, res) => {
   }
 });
 
+
+// 保存详细的30天运动计划和饮食计划
+router.post("/save-detailed-plans", requireAuth, async (req, res) => {
+  try {
+    const { exerciseDays, dietDays } = req.body || {};
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    // 查找或创建当前月的计划记录
+    let plan = await HealthPlan.findOne({
+      where: { user_id: req.session.userId, plan_month: month, plan_type: "monthly" },
+      order: [["generated_at", "DESC"]],
+    });
+
+    if (!plan) {
+      // 如果没有月度计划，创建一个
+      plan = await HealthPlan.create({
+        user_id: req.session.userId,
+        plan_type: "monthly",
+        plan_month: month,
+      });
+    }
+
+    // 更新详细计划数据到 plan_data 字段
+    const existingData = plan.plan_data ? JSON.parse(plan.plan_data) : {};
+    if (exerciseDays) existingData.detailed_exercise_days = exerciseDays;
+    if (dietDays) existingData.detailed_diet_days = dietDays;
+    plan.plan_data = JSON.stringify(existingData);
+    await plan.save();
+
+    res.json({ message: "详细计划已保存", plan_month: month });
+  } catch (err) {
+    console.error("保存详细计划失败:", err);
+    res.status(500).json({ error: "保存详细计划失败" });
+  }
+});
+
+// 获取详细计划数据
+router.get("/detailed-plans", requireAuth, async (req, res) => {
+  try {
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    const plan = await HealthPlan.findOne({
+      where: { user_id: req.session.userId, plan_month: month, plan_type: "monthly" },
+      order: [["generated_at", "DESC"]],
+    });
+
+    if (!plan || !plan.plan_data) {
+      return res.json({ exerciseDays: null, dietDays: null });
+    }
+
+    const data = JSON.parse(plan.plan_data);
+    res.json({
+      exerciseDays: data.detailed_exercise_days || null,
+      dietDays: data.detailed_diet_days || null,
+    });
+  } catch (err) {
+    console.error("获取详细计划失败:", err);
+    res.status(500).json({ error: "获取详细计划失败" });
+  }
+});
+
 module.exports = router;
+
+
+

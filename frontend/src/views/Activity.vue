@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <AppLayout>
     <div class="page-header">
       <div>
@@ -181,9 +181,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, inject } from "vue";
+import { ref, reactive, computed, watch, onMounted, inject } from "vue";
 import { useTimerStore } from "../store/timer.js";
 import { useHealthStore } from "../store/health.js";
+import { planAPI } from "../api/index.js";
 import { getSportIcon } from "../utils/icons.js";
 import AppLayout from "../components/AppLayout.vue";
 
@@ -244,9 +245,9 @@ const isOutdoorType = computed(() => ["outdoor_run", "walking", "outdoor_cycle"]
 const showDistanceField = computed(() => ["outdoor_run", "outdoor_cycle", "walking", "indoor_run"].includes(selectedType.value));
 
 const getTypeName = (type) => { const t = activityTypes.find((a) => a.type === type); return t?.name || type; };
-
-// 月度计划数据
-const monthlyPlan = {};
+// 月度计划数据 - 优先从后端加载已保存的计划
+const monthlyPlan = reactive({});
+const planLoaded = ref(false);
 const planTypes = ["有氧训练", "力量训练", "间歇训练", "恢复训练", "耐力训练", "柔韧训练", "综合训练"];
 const planDescs = {
   "有氧训练": "中等强度持续有氧，保持心率在最大心率的65-75%，注意呼吸节奏和步频均匀。",
@@ -258,18 +259,44 @@ const planDescs = {
   "综合训练": "结合多种训练模式的综合课，有氧+力量+柔韧全面覆盖。",
 };
 
-for (let d = 1; d <= 30; d++) {
-  const idx = d % 7;
-  monthlyPlan[d] = {
-    type: planTypes[idx],
-    desc: planDescs[planTypes[idx]],
-    duration: idx === 0 ? 40 : idx === 4 ? 50 : idx === 6 ? 30 : 35,
-    cal: idx === 0 ? 320 : idx === 4 ? 400 : idx === 6 ? 180 : 280,
-  };
+// 初始化默认计划（作为后备）
+function initDefaultPlan() {
+  for (let d = 1; d <= 30; d++) {
+    const idx = d % 7;
+    monthlyPlan[d] = {
+      type: planTypes[idx],
+      desc: planDescs[planTypes[idx]],
+      duration: idx === 0 ? 40 : idx === 4 ? 50 : idx === 6 ? 30 : 35,
+      cal: idx === 0 ? 320 : idx === 4 ? 400 : idx === 6 ? 180 : 280,
+    };
+  }
 }
 
-function isRestDay(d) { return d % 7 === 6; }
+// 从后端加载详细计划
+async function loadExercisePlan() {
+  try {
+    const { data } = await planAPI.getDetailedPlans();
+    if (data && data.exerciseDays && data.exerciseDays.length >= 28) {
+      for (const day of data.exerciseDays) {
+        if (day.day >= 1 && day.day <= 30) {
+          monthlyPlan[day.day] = {
+            type: day.type || "运动",
+            desc: day.advice || "",
+            duration: day.duration || 30,
+            cal: day.calories || 200,
+          };
+        }
+      }
+      planLoaded.value = true;
+      return;
+    }
+  } catch (err) {
+    console.warn("加载运动计划失败，使用默认计划:", err.message);
+  }
+  initDefaultPlan();
+}
 function getDayType(d) { return monthlyPlan[d]?.type || "休息"; }
+function isRestDay(d) { return d % 7 === 6 || d % 7 === 0; }
 function getDayDuration(d) { return monthlyPlan[d]?.duration || 0; }
 function getDayCal(d) { return monthlyPlan[d]?.cal || 0; }
 
@@ -304,7 +331,7 @@ const formatTime = (seconds) => timerStore.formatTime();
 function startTimer() {
   if (timerStore.isRunning) return;
   if (selectedType.value === "outdoor_run" || selectedType.value === "walking" || selectedType.value === "outdoor_cycle") {
-    showDistanceField.value = true;
+    // showDistanceField auto-computes from selectedType
   }
   // 默认30分钟倒计时
   const mins = targetMinutes.value > 0 ? targetMinutes.value : 30;
@@ -335,7 +362,7 @@ async function stopTimer() {
     hiit: { calPerMin: 11, stepsPerMin: 130, mv: true },
     badminton: { calPerMin: 7, stepsPerMin: 100, mv: true },
   };
-  const typeName = { outdoor_run: "户外跑步", walking: "健走", outdoor_cycle: "户外骑行", indoor_run: "室内跑步", jump_rope: "跳绳", swimming: "游泳", yoga: "璑伽", strength: "力量训练", hiit: "HIIT间歇", badminton: "羽毛球" }[selectedType.value] || "运动";
+  const typeName = { outdoor_run: "户外跑步", walking: "健走", outdoor_cycle: "户外骑行", indoor_run: "室内跑步", jump_rope: "跳绳", swimming: "游泳", yoga: "瑜伽", strength: "力量训练", hiit: "HIIT间歇", badminton: "羽毛球" }[selectedType.value] || "运动";
   const meta = metaMap[selectedType.value] || { calPerMin: 6, stepsPerMin: 80, mv: false };
   const calories = Math.round(meta.calPerMin * duration);
   const steps = Math.round(meta.stepsPerMin * duration);
@@ -371,7 +398,7 @@ async function stopTimer() {
   });
   showToast("运动完成！" + duration + "分钟/消耗" + calories + "千卡", "success");  
 }
-onMounted(() => { healthStore.loadActivityTypes(); healthStore.loadCurrentSummary(); });
+onMounted(() => { healthStore.loadActivityTypes(); healthStore.loadCurrentSummary(); loadExercisePlan(); });
 // Timer is managed globally, no cleanup needed
 </script>
 
@@ -408,3 +435,6 @@ onMounted(() => { healthStore.loadActivityTypes(); healthStore.loadCurrentSummar
 .day-pill.rest { background: #fef3c7; color: #92400e; }
 .day-pill:hover:not(.active) { background: var(--gray-200); }
 </style>
+
+
+

@@ -1,4 +1,4 @@
-﻿// 全面食物数据库 - 7大类
+// 全面食物数据库 - 7大类
 export const foodDatabase = {
   "谷类及薯类": [
     { name: "大米(籼米)", cal: 346, protein: 7.9, carbs: 77.2, fat: 0.6, fiber: 0.4, unit: "100g" },

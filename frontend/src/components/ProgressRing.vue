@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="progress-ring-container" :style="{ width: size + 'px', height: size + 'px' }">
     <svg
       :width="size"

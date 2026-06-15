@@ -1,4 +1,5 @@
-﻿require("dotenv").config();
+process.on("unhandledRejection", (reason) => { console.error("UNHANDLED REJECTION:", reason?.message || reason); });
+require("dotenv").config();
 //function require(id){}模块加载函数，id为模块标识符，返回一任意类型的模块导出内容
 //require函数解析路径查找所需的模块，创建模块对象执行模块代码，每一模块代码被包裹在函数中
 const express = require("express");
@@ -58,28 +59,34 @@ app.get("/api/health", (req, res) => {
 
 //错误处理
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
+  console.error("Unhandled error:", err.message, err.stack?.substring(0,500));
   res.status(500).json({ error: "服务器内部错误" });
 });
 
 //启动流程
 async function start() {
   try {
-    await sequelize.authenticate(); //测试数据库连接
+    await sequelize.authenticate();
     console.log("数据库连接成功");
-
-    //同步模型到数据库
     await sequelize.sync();
     console.log("数据表同步完成");
-
-    //创建session表
     await sessionStore.sync();
     console.log("Session存储同步完成");
-
-    //启动HTTP服务器，开始监听请求
-    app.listen(PORT, () => {
-      console.log(`服务器运行在 http://localhost:${PORT}`);
-    });
+    function tryListen(port) {
+      const server = app.listen(port, () => {
+        console.log("服务器运行在 http://localhost:" + port);
+      });
+      server.on("error", (err) => {
+        if (err.code === "EADDRINUSE") {
+          console.error("端口 " + port + " 被占用, 尝试端口 " + (port+1));
+          tryListen(port + 1);
+        } else {
+          console.error("启动失败:", err);
+          process.exit(1);
+        }
+      });
+    }
+    tryListen(PORT);
   } catch (err) {
     console.error("启动失败:", err);
     process.exit(1);
@@ -87,11 +94,3 @@ async function start() {
 }
 
 start();
-
-/*
-整体的运行逻辑如下所示：
-authenticate()验证数据库连接
-sync({alter:ture})自动修改表结构
-sessionStore.sync():创建sessions表
-applisten()开始进行监听
-*/

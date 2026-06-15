@@ -1,4 +1,4 @@
-﻿// 食谱数据库 - 42道常见菜肴
+// 食谱数据库 - 42道常见菜肴
 export const recipes = [
   { name: "番茄鸡蛋面", desc: "番茄+鸡蛋+面条+葱花", calories: 320, protein: 14, carbs: 45, fat: 8 },
   { name: "鸡蛋炒饭", desc: "米饭+鸡蛋+葱花+胡萝卜", calories: 420, protein: 15, carbs: 55, fat: 12 },

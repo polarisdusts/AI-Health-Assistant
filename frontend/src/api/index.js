@@ -1,4 +1,4 @@
-﻿import axios from "axios";
+import axios from "axios";
 
 const api = axios.create({
   baseURL: "/api",
@@ -42,7 +42,9 @@ export const planAPI = {
   generateMonthly: () => api.post("/plan/generate-monthly"),
   generateDetailedExercise: (data) => api.post("/plan/generate-detailed-exercise", data),
   getActive: () => api.get("/plan/active"),
-  getHistory: () => api.get("/plan/history"),
+  getHistory: () => api.get('/plan/history'),
+  saveDetailedPlans: (data) => api.post("/plan/save-detailed-plans", data),
+  getDetailedPlans: () => api.get("/plan/detailed-plans"),
 };
 
 // Report
@@ -52,3 +54,5 @@ export const reportAPI = {
 };
 
 export default api;
+
+

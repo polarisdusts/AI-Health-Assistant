@@ -35,3 +35,6 @@ stdout.txt
 check_enc.py
 check_encoding.py
 fix_encoding.py
+
+# Utility scripts
+_fix.js
