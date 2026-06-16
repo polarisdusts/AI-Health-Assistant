@@ -25,7 +25,7 @@ const ACTIVITY_META = {
 
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const { activity_type, duration, distance } = req.body;
+    let { activity_type, duration, distance } = req.body;
     if (!activity_type || !duration) {
       return res.status(400).json({ error: "请提供运动类型和时长" });
     }

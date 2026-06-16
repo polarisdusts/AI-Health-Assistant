@@ -967,6 +967,78 @@ input, select, textarea {
   }
 }
 
+
+/* Fluid responsive grids */
+.app-content {
+  max-width: 100% !important;
+  width: 100%;
+}
+
+@media (min-width: 1200px) {
+  .app-content {
+    max-width: 1200px !important;
+    margin: 0 auto;
+  }
+}
+
+/* Fluid grid overrides for inline styles */
+@media (max-width: 1200px) {
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  }
+  .report-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  }
+  div[style*="grid-template-columns: 1fr 1fr; gap: 20px;"] {
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  div[style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .page-header {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .app-content { padding: 12px !important; }
+  .card { padding: 16px !important; }
+  .page-title { font-size: 1.2rem !important; }
+  .metric-value { font-size: 1.2rem !important; }
+}
+
+/* Fluid sidebar */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar-logo span:last-child,
+  .sidebar-subtitle,
+  .nav-item span:last-child,
+  .sidebar-footer { display: none; }
+  .sidebar-header { padding: 16px 12px; }
+  .sidebar-nav { padding: 8px; }
+  .nav-item { justify-content: center; padding: 12px; }
+  .app-main { margin-left: 60px; }
+}
+
+/* Fluid font and spacing using clamp */
+.metric-value { font-size: clamp(1rem, 2.5vw, 1.5rem) !important; }
+.page-title { font-size: clamp(1.1rem, 3vw, 1.5rem) !important; }
+.card { padding: clamp(12px, 2vw, 24px) !important; }
+.app-content { padding: clamp(12px, 2vw, 24px) clamp(12px, 3vw, 32px) !important; }
+
 /* ========== Scrollbar ========== */
 ::-webkit-scrollbar {
   width: 6px;
@@ -1026,4 +1098,30 @@ input, select, textarea {
   .card { padding: 16px !important; }
   .page-title { font-size: 1.2rem !important; }
   .metric-value { font-size: 1.2rem !important; }
+}
+
+/* Responsive: all 2-column inline grids -> single column on tablet */
+@media (max-width: 1024px) {
+  div[class*="grid-2col"], div[style*="1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  
+}
+
+@media (max-width: 640px) {
+  
+  .report-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .page-header {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  div[style*="gap: 20px"] {
+    gap: 12px !important;
+  }
 }

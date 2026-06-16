@@ -53,6 +53,15 @@ export const reportAPI = {
   getCurrentSummary: () => api.get("/report/current-summary"),
 };
 
+// Device (smart bracelet)
+export const deviceAPI = {
+  bind: (data) => api.post("/device/bind", data),
+  unbind: (id) => api.post("/device/unbind/" + id),
+  list: () => api.get("/device/list"),
+  summary: () => api.get("/device/summary"),
+  heartRate: () => api.get("/device/heart-rate"),
+  bloodOxygen: () => api.get("/device/blood-oxygen"),
+  sleepHistory: (params) => api.get("/device/sleep-history", { params }),
+};
+
 export default api;
-
-

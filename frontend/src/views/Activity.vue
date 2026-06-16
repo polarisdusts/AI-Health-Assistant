@@ -365,10 +365,6 @@ async function stopTimer() {
     climbing: { calPerMin: 9, stepsPerMin: 50, mv: true },
     boxing: { calPerMin: 10, stepsPerMin: 100, mv: true },
     dancing: { calPerMin: 5, stepsPerMin: 80, mv: true },
-    basketball: { calPerMin: 8, stepsPerMin: 120, mv: true },
-    climbing: { calPerMin: 9, stepsPerMin: 50, mv: true },
-    boxing: { calPerMin: 10, stepsPerMin: 100, mv: true },
-    dancing: { calPerMin: 5, stepsPerMin: 80, mv: true },
   };
   const typeName = { outdoor_run: "户外跑步", walking: "健走", outdoor_cycle: "户外骑行", indoor_run: "室内跑步", jump_rope: "跳绳", swimming: "游泳", yoga: "瑜伽", strength: "力量训练", hiit: "HIIT间歇", badminton:"羽毛球", basketball:"篮球", climbing:"攀岩", boxing:"拳击", dancing:"舞蹈" }[selectedType.value] || "运动";
   const meta = metaMap[selectedType.value] || { calPerMin: 6, stepsPerMin: 80, mv: false };

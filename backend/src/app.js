@@ -51,6 +51,7 @@ app.use("/api/profile", require("./routes/profile"));
 app.use("/api/weight", require("./routes/weight"));
 app.use("/api/activity", require("./routes/activity"));
 app.use("/api/plan", require("./routes/plan"));
+app.use("/api/device", require("./routes/device"));
 app.use("/api/report", require("./routes/report"));
 //使用get函数只能匹配GET方法，保证数据处理规范
 app.get("/api/health", (req, res) => {
