@@ -21,6 +21,12 @@ const ActivityRecord = sequelize.define("ActivityRecord", {
       "swimming",
       "yoga",
       "strength",
+      "hiit",
+      "badminton",
+      "basketball",
+      "climbing",
+      "boxing",
+      "dancing",
       "other"
     ),
     allowNull: false,

@@ -38,3 +38,6 @@ fix_encoding.py
 
 # Utility scripts
 _fix.js
+
+# Fix scripts
+fix_scripts/

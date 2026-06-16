@@ -1011,3 +1011,19 @@ input, select, textarea {
 .nav-item.active .nav-icon {
   background: rgba(255,255,255,0.3);
 }
+
+
+/* ========== Responsive Grids ========== */
+@media (max-width: 1024px) {
+  .activity-grid,
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-content { padding: 12px !important; }
+  .card { padding: 16px !important; }
+  .page-title { font-size: 1.2rem !important; }
+  .metric-value { font-size: 1.2rem !important; }
+}

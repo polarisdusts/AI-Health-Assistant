@@ -275,7 +275,22 @@ async function generateDetailedDietPlan(user, dietGoal, weightContext) {
   }
   return days;
 }
+
+/**
+ * 生成单次运动 AI 分析报告
+ */
+async function generateActivityAnalysis(user, activityData) {
+  const bmi = user.weight ? (user.weight / ((user.height / 100) * (user.height / 100))).toFixed(1) : "未知";
+  const age = user.age || "未知";
+  const gender = user.gender === "male" ? "男" : user.gender === "female" ? "女" : "其他";
+  const activityLabel = user.activity_level === "low" ? "低" : user.activity_level === "medium" ? "中" : "高";
+  const prompt = "你是一名专业运动健康顾问。请根据以下用户信息和本次运动数据，给出专业的运动分析报告（200字以内）。\n\n【用户信息】年龄:" + age + "岁 性别:" + gender + " BMI:" + bmi + " 活动水平:" + activityLabel + "\n【运动数据】类型:" + (activityData.typeName||"运动") + " 时长:" + activityData.duration + "分钟 消耗:" + activityData.calories + "千卡 步数:" + (activityData.steps||0) + " 心率:" + (activityData.avgHeartRate||0) + "bpm 步频:" + (activityData.cadence||0) + "步/分 强度:" + (activityData.isMV?"中高强度":"低强度") + " 评分:" + (activityData.score||0) + "/100\n\n请评价本次运动表现、心肺燃脂效果，并给出优化建议和下次运动调整建议。";
+  const response = await callDeepSeek([{role:"system",content:"你是一名专业运动健康顾问，回答简洁专业，使用中文。"},{role:"user",content:prompt}],0.5,1024);
+  return response;
+}
+
 module.exports = {
+  generateActivityAnalysis,
   generateMonthlyPlan,
   generateDailySuggestion,
   generateMonthlyReport,

@@ -118,4 +118,19 @@ router.delete("/:id", requireAuth, async (req, res) => {
   }
 });
 
+
+// AI 运动分析
+router.post("/ai-analysis", requireAuth, async (req, res) => {
+  try {
+    const { User } = require("../models");
+    const user = await User.findByPk(req.session.userId);
+    if (!user) return res.status(404).json({ error: "用户不存在" });
+    const { generateActivityAnalysis } = require("../utils/deepseekClient");
+    const analysis = await generateActivityAnalysis(user, req.body);
+    res.json({ analysis });
+  } catch (err) {
+    console.error("AI 分析失败:", err.message);
+    res.status(500).json({ error: "AI 分析失败" });
+  }
+});
 module.exports = router;

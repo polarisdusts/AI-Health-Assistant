@@ -11,14 +11,10 @@
       <div class="card">
         <div class="card-header"><span class="card-title">体重变化趋势</span><button class="btn btn-sm btn-primary" @click="showWeightModal = true">+ 记录</button></div>
         <div v-if="healthStore.weightRecords.length > 0">
-          <div style="display: flex; align-items: flex-end; gap: 4px; height: 160px; padding: 16px 0;">
-            <div v-for="(record, idx) in visibleWeightRecords" :key="record.id" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-              <div style="font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px;">{{ record.weight.toFixed(1) }}</div>
-              <div :style="{ height: getBarHeight(record.weight) + 'px', width: '100%', maxWidth: '40px', background: weightBarColor(record), borderRadius: '4px 4px 0 0', minHeight: '8px' }"></div>
-              <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">{{ formatDateShort(record.record_date) }}</div>
-            </div>
-          </div>
-          <div style="margin-top: 12px;">
+          <div style="position: relative; height: 220px; width: 100%; padding: 8px 0;">
+  <canvas ref="weightChartCanvas"></canvas>
+</div>
+<div style="margin-top: 12px;">
             <div v-for="record in healthStore.weightRecords.slice(-10).reverse()" :key="record.id" style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--gray-100); font-size: 0.85rem;">
               <span>{{ record.record_date }}</span><span style="font-weight: 600;">{{ record.weight }} kg</span><span v-if="record.note" style="color: var(--text-muted); font-size: 0.75rem;">{{ record.note }}</span>
             </div>
@@ -71,9 +67,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject } from "vue";
+import { ref, computed, onMounted, inject, nextTick, watch } from "vue";
 import AppLayout from "../components/AppLayout.vue";
 import { useHealthStore } from "../store/health.js";
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
 const healthStore = useHealthStore();
 const showToast = inject("showToast");
@@ -85,6 +83,50 @@ const weightForm = ref({ weight: "", note: "" });
 const visibleWeightRecords = computed(() => healthStore.weightRecords.slice(-14));
 const minWeight = computed(() => { if (healthStore.weightRecords.length === 0) return 50; return Math.min(...healthStore.weightRecords.map((r) => r.weight)) - 2; });
 const maxWeight = computed(() => { if (healthStore.weightRecords.length === 0) return 100; return Math.max(...healthStore.weightRecords.map((r) => r.weight)) + 2; });
+
+
+const weightChartCanvas = ref(null);
+let weightChartInstance = null;
+
+function initWeightChart() {
+  nextTick(() => {
+    if (!weightChartCanvas.value) return;
+    if (weightChartInstance) weightChartInstance.destroy();
+    const records = healthStore.weightRecords;
+    if (records.length === 0) return;
+    const sorted = [...records].sort((a,b) => new Date(a.record_date) - new Date(b.record_date));
+    const labels = sorted.map(r => { const d=new Date(r.record_date); return (d.getMonth()+1)+"/"+d.getDate(); });
+    const data = sorted.map(r => r.weight);
+    const ctx = weightChartCanvas.value.getContext("2d");
+    weightChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "体重 (kg)",
+          data,
+          borderColor: "#f97316",
+          backgroundColor: "rgba(249, 115, 22, 0.1)",
+          fill: true,
+          tension: 0.3,
+          pointBackgroundColor: "#f97316",
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: false, grid: { color: "rgba(0,0,0,0.06)" } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  });
+}
 
 const getBarHeight = (weight) => { const range = maxWeight.value - minWeight.value; if (range === 0) return 80; return ((weight - minWeight.value) / range) * 120 + 20; };
 const weightBarColor = (record) => { const avg = healthStore.weightRecords.reduce((s, r) => s + r.weight, 0) / healthStore.weightRecords.length; if (record.weight < avg - 1) return "#10b981"; if (record.weight > avg + 1) return "#ef4444"; return "#f97316"; };
@@ -106,5 +148,7 @@ const generatePlan = async () => {
   else showToast(result.error || "生成失败", "error");
 };
 
+watch(() => healthStore.weightRecords.length, () => { nextTick(() => initWeightChart()); });
 onMounted(() => { healthStore.loadWeightRecords(); healthStore.loadPlanHistory(); });
+watch(() => healthStore.weightRecords, () => { initWeightChart(); }, { deep: true });
 </script>

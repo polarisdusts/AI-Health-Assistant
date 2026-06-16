@@ -60,6 +60,13 @@ export const sportIcons = {
     <rect x="10" y="24" width="28" height="6" rx="2" fill="currentColor" opacity="0.15"/>
   </svg>`,
 
+
+  hiit: '<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M24 4A20 20 0 1 1 4 24 20 20 0 0 1 24 4zM16 24l6 6 10-12M8 8l32 32" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>',
+  badminton: '<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M24 24a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM24 29v12M24 19v-6M16 32l-6 10M32 32l6 10" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>',
+  basketball: '<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M24 6a18 18 0 1 0 0 36 18 18 0 0 0 0-36zM24 6v36M6 24h36" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>',
+  climbing: '<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M24 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM24 14v10l-8 20M24 24l8 18" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>',
+  boxing: '<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M18 16a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM36 20a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8 38l6-14 4 2-4 14" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>',
+  dancing: '<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M24 10a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM24 16v8l-6 6M24 24l8 8-4 8" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>',
   other: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="24" cy="24" r="14" stroke="currentColor" stroke-width="2.5" fill="none"/>
     <circle cx="24" cy="24" r="6" fill="currentColor" opacity="0.4"/>

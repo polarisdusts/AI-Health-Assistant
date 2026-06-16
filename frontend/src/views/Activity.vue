@@ -361,8 +361,16 @@ async function stopTimer() {
     strength: { calPerMin: 6, stepsPerMin: 30, mv: true },
     hiit: { calPerMin: 11, stepsPerMin: 130, mv: true },
     badminton: { calPerMin: 7, stepsPerMin: 100, mv: true },
+    basketball: { calPerMin: 8, stepsPerMin: 120, mv: true },
+    climbing: { calPerMin: 9, stepsPerMin: 50, mv: true },
+    boxing: { calPerMin: 10, stepsPerMin: 100, mv: true },
+    dancing: { calPerMin: 5, stepsPerMin: 80, mv: true },
+    basketball: { calPerMin: 8, stepsPerMin: 120, mv: true },
+    climbing: { calPerMin: 9, stepsPerMin: 50, mv: true },
+    boxing: { calPerMin: 10, stepsPerMin: 100, mv: true },
+    dancing: { calPerMin: 5, stepsPerMin: 80, mv: true },
   };
-  const typeName = { outdoor_run: "户外跑步", walking: "健走", outdoor_cycle: "户外骑行", indoor_run: "室内跑步", jump_rope: "跳绳", swimming: "游泳", yoga: "瑜伽", strength: "力量训练", hiit: "HIIT间歇", badminton: "羽毛球" }[selectedType.value] || "运动";
+  const typeName = { outdoor_run: "户外跑步", walking: "健走", outdoor_cycle: "户外骑行", indoor_run: "室内跑步", jump_rope: "跳绳", swimming: "游泳", yoga: "瑜伽", strength: "力量训练", hiit: "HIIT间歇", badminton:"羽毛球", basketball:"篮球", climbing:"攀岩", boxing:"拳击", dancing:"舞蹈" }[selectedType.value] || "运动";
   const meta = metaMap[selectedType.value] || { calPerMin: 6, stepsPerMin: 80, mv: false };
   const calories = Math.round(meta.calPerMin * duration);
   const steps = Math.round(meta.stepsPerMin * duration);
@@ -374,23 +382,29 @@ async function stopTimer() {
     : "N/A";
   const score = Math.round(Math.min(100, 40 + (duration / 60) * 30 + Math.random() * 30));
   
-  // 生成详细 AI 分析
-  const intensityLabel = meta.mv ? "中高强度" : "低强度";
-  const scoreLabel = score >= 80 ? "优秀" : score >= 60 ? "良好" : score >= 40 ? "中等" : "初级";
-  let advice = "";
-  if (meta.mv) {
-    advice = "本次达到中高强度，对心肺功能和燃脂效果非常有益。建议每周安排3-5次同等强度训练。";
-  } else {
-    advice = "本次运动为低强度有氧，适合恢复和日常维持。若想提升燃脂效率，可尝试加入间歇快走或小幅跑步。";
+    lastResult.value = { duration, calories, steps, score, heartRate: avgHeartRate, cadence, speed, isMV: meta.mv };
+  try {
+    const res = await fetch("/api/activity/ai-analysis", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        typeName: typeName,
+        duration: duration,
+        calories: calories,
+        steps: steps,
+        avgHeartRate: avgHeartRate,
+        cadence: cadence,
+        isMV: meta.mv,
+        score: score
+      })
+    });
+    const data = await res.json();
+    aiAnalysis.value = data.analysis || "AI分析暂时不可用";
+  } catch(e) {
+    console.error('AI analyze error:', e);
+    aiAnalysis.value = "AI分析暂时不可用，请稍后再试";
   }
-  if (cadence > 140) advice += "步频较高，跑姿经济性好，注意保持躯干立直。";
-  else if (cadence < 100) advice += "步频偏低，可尝试提高步频至150-160步/分，减少关节冲击。";
-  if (avgHeartRate > 150) advice += "心率偏高，建议适当降低强度，保持在最大心率的65-75%为佳。";
-  
-  lastResult.value = { duration, calories, steps, score, heartRate: avgHeartRate, cadence, speed, isMV: meta.mv };
-  aiAnalysis.value = "「运动报告」" + typeName + "\n  运动时长: " + duration + "分钟\n  消耗卡路里: " + calories + "千卡\n  估算步数: " + steps + "步\n  平均心率: " + avgHeartRate + "bpm\n  平均步频: " + cadence + "步/分\n  运动强度: " + intensityLabel + "\n  评分: " + score + "/100 (" + scoreLabel + ")\n\n优化建议:\n" + advice;
-
-  // 保存到后端，recordActivity 内部自动调用 loadCurrentSummary
+// 保存到后端，recordActivity 内部自动调用 loadCurrentSummary
   await healthStore.recordActivity({
     activity_type: selectedType.value,
     duration: duration,
